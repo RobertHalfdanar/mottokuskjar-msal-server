@@ -4,6 +4,7 @@ services:
     image: "nginx:1.27.0-bookworm"
     volumes:
       - ./nginx/production.conf:/etc/nginx/nginx.conf
+      - ./certs:/certs # Add certificates volume
     command: ["nginx", "-g", "daemon off;"]
     restart: always
     ports:
