@@ -7,7 +7,7 @@ services:
     command: ["nginx", "-g", "daemon off;"]
     restart: always
     ports:
-      - 80:80
+      - 443:443
     networks:
       - public
     depends_on:
