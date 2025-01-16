@@ -1,0 +1,11 @@
+services:
+  # The main application service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    env_file: ".env"
+    ports:
+      - "3000:3000"
+    command: ["npm", "start"]

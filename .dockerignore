@@ -1,0 +1,19 @@
+# Dev tools
+.git
+.github
+.editorconfig
+.gitattributes
+.node-version
+
+node_modules
+
+# Docker Files
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+
+# Readme
+README.md
+
+# Nginx config
+nginx
