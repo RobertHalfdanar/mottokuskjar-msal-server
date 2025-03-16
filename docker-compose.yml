@@ -6,6 +6,9 @@ services:
       dockerfile: Dockerfile
       target: production
     env_file: ".env"
+    volumes:
+      - .:/app           # Mount the project directory to /app inside the container.
+      - /app/node_modules # Prevent overwriting node_modules in the container.
     ports:
       - "3000:3000"
     command: ["npm", "start"]

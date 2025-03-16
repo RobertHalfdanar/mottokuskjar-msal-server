@@ -1,7 +1,11 @@
 const {
 	CommunicationIdentityClient,
 } = require("@azure/communication-identity");
-const { PublicClientApplication, CryptoProvider, Configuration } = require("@azure/msal-node");
+const msal  = require("@azure/msal-node");
+const { PublicClientApplication, CryptoProvider, Configuration, ConfidentialClientApplication } = msal
+
+const graph = require("./graph")
+
 const express = require("express");
 
 // You will need to set environment variables in .env
@@ -10,6 +14,7 @@ const SERVER_HOST = process.env.HOST || "http://localhost:3000"
 
 const clientId = process.env.AZURE_CLIENT_ID // "f53a37a2-c624-4c76-9c26-083c8109678c";
 const tenantId = process.env.AZURE_TENANT_ID //"283d6102-3937-4c3b-8381-cbec140bdef8";
+
 
 const configurations = {
 	"graph": {
@@ -169,8 +174,21 @@ app.get("/token", async (req, res) => {
 	res.send("Hello World!");
 })
 
-app.listen(SERVER_PORT, () =>
-	console.log(
-		`Communication access token application started on ${SERVER_PORT}!`
-	)
+
+app.get("/employees-status", async (req, res) => {
+
+	console.log("test")
+
+	await graph.getUserMailboxSettings()
+
+	res.json({})
+
+})
+
+app.listen(SERVER_PORT, () => {
+		graph.setup()
+		console.log(
+			`Communication access token application started on ${SERVER_PORT}!`
+		)
+	}
 );
