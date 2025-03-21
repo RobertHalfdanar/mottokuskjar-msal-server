@@ -41,4 +41,4 @@ ENV PORT=3000
 EXPOSE 3000
 
 # Change the user
-USER mottokusjakr:kleo
+USER mottokuskjar:kleo

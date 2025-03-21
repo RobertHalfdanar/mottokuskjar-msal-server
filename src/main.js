@@ -1,3 +1,4 @@
+
 const {
 	CommunicationIdentityClient,
 } = require("@azure/communication-identity");
@@ -175,13 +176,92 @@ app.get("/token", async (req, res) => {
 })
 
 
-app.get("/employees-status", async (req, res) => {
+app.get("/employees", async (req, res) => {
 
-	console.log("test")
 
-	await graph.getUserMailboxSettings()
+	const employees = await graph.getUsersInGroup()
 
-	res.json({})
+
+
+
+	/**
+	 *
+	 * @param {Presence} presence
+	 */
+	function evaluateUserPresence(presence) {
+		return presence.availability !== "DoNotDisturb";
+	}
+
+	/**
+	 *
+	 * @param {MailboxSettings} mailboxSettings
+	 */
+	function evaluateUserMailboxSetting(mailboxSettings) {
+		const today = new Date()
+
+		const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+		const weekday = weekdays[today.getDay()]
+
+
+		console.log(mailboxSettings)
+
+		if (!mailboxSettings.workingHours.daysOfWeek.includes(weekday)) return false
+
+		const startTimeHours = mailboxSettings.workingHours.startTime.slice(0, 2)
+		const startTimeMinutes = mailboxSettings.workingHours.startTime.slice(3, 5)
+
+		const endTimeHours = parseInt(mailboxSettings.workingHours.endTime.slice(0, 2))
+		const endTimeMinutes = parseInt(mailboxSettings.workingHours.endTime.slice(3, 5))
+
+		const startDate = new Date()
+		startDate.setHours(startTimeHours)
+		startDate.setMinutes(startTimeMinutes)
+
+		const endDate = new Date()
+		endDate.setHours(endTimeHours)
+		endDate.setMinutes(endTimeMinutes)
+
+		return startDate <= today && today <= endDate
+	}
+
+
+	/**
+	 * @param {MailboxSettings} mailboxSettings
+	 */
+	function evaluateUserVacation(mailboxSettings) {
+		if (mailboxSettings.automaticRepliesSetting.status === "disabled") return true
+
+		console.log(mailboxSettings)
+
+		const startDate = new Date(mailboxSettings.automaticRepliesSetting.scheduledStartDateTime.dateTime)
+		const endDate = new Date(mailboxSettings.automaticRepliesSetting.scheduledEndDateTime.dateTime)
+
+		const today = new Date()
+
+		return !(startDate <= today && today <= endDate)
+	}
+
+	const employeesState = {}
+
+
+	for (const employee of employees.value) {
+
+		//if (employee.displayName != "Róbert Hálfdanarson") continue
+
+		const mailboxSetting = await graph.getUserMailboxSettings(employee.id)
+		const presence = await graph.getUserPresence(employee.id)
+
+		employeesState[employee.displayName] = evaluateUserMailboxSetting(mailboxSetting) && evaluateUserVacation(mailboxSetting) && evaluateUserPresence(presence)
+	}
+
+	employees.value.sort((a, b) => a.displayName.localeCompare(b.displayName))
+
+
+	res.json({employees: employees.value.map(emp => ({
+		name: emp.displayName,
+		id: emp.id,
+		isActive: employeesState[emp.displayName],
+	}))})
 
 })
 
