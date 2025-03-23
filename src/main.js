@@ -7,15 +7,17 @@ const { PublicClientApplication, CryptoProvider, Configuration, ConfidentialClie
 
 const graph = require("./graph")
 
+const bearerToken = require("express-bearer-token");
+
 const express = require("express");
+const {setup} = require("./graph");
 
 // You will need to set environment variables in .env
 const SERVER_PORT = process.env.PORT || 3000
 const SERVER_HOST = process.env.HOST || "http://localhost:3000"
 
-const clientId = process.env.AZURE_CLIENT_ID // "f53a37a2-c624-4c76-9c26-083c8109678c";
-const tenantId = process.env.AZURE_TENANT_ID //"283d6102-3937-4c3b-8381-cbec140bdef8";
-
+const clientId = process.env.AZURE_CLIENT_ID
+const tenantId = process.env.AZURE_TENANT_ID
 
 const configurations = {
 	"graph": {
@@ -24,14 +26,14 @@ const configurations = {
 			"user.read",
 			"User.Read.All",
 		],
-		"redirectUri": `${SERVER_HOST}/graph/redirect` // "http://localhost:3000/graph/redirect",
+		"redirectUri": `${SERVER_HOST}/graph/redirect`
 	},
 	"teams": {
 		"scopes": [
 			"https://auth.msft.communication.azure.com/Teams.ManageCalls",
 			"https://auth.msft.communication.azure.com/Teams.ManageChats",
 		],
-		"redirectUri": `${SERVER_HOST}/teams/redirect`,  // "http://localhost:3000/teams/redirect",
+		"redirectUri": `${SERVER_HOST}/teams/redirect`,
 	}
 }
 
@@ -53,7 +55,12 @@ const provider = new CryptoProvider();
 
 const app = express();
 
+app.use(bearerToken())
+
 let pkceVerifier = "";
+
+
+
 
 app.get("/graph", async (req, res) => {
 	// Generate PKCE Codes before starting the authorization flow
@@ -104,15 +111,16 @@ app.get("/graph/redirect", async (req, res) => {
 		redirectUri: configurations.graph.redirectUri,
 		codeVerifier: pkceVerifier,
 	};
-	console.log(tokenRequest);
+
+
 
 	// Retrieve the AAD token and object ID of a Teams user
 	pca
 		.acquireTokenByCode(tokenRequest)
 		.then(async (response) => {
-			console.log("Response:", response);
 			let token = response.accessToken;
 			let expiresOn = response.expiresOn.toISOString();
+
 
 			res.redirect(`/token?token=${token}&expiresOn=${expiresOn}`);
 		})
@@ -176,7 +184,22 @@ app.get("/token", async (req, res) => {
 })
 
 
+app.use((req, res, next) => {
+	console.log(`Token: ${req.token}`);
+	next();
+})
+
 app.get("/employees", async (req, res) => {
+
+	// Check if the user Móttaka is logged in
+
+	const remoteIp = req.socket.remoteAddress
+
+
+	console.log("Remote IP:", remoteIp)
+
+
+	// This is only allowed to be run on is authorized flag is set to true
 
 
 	const employees = await graph.getUsersInGroup()
@@ -201,9 +224,6 @@ app.get("/employees", async (req, res) => {
 
 		const weekdays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 		const weekday = weekdays[today.getDay()]
-
-
-		console.log(mailboxSettings)
 
 		if (!mailboxSettings.workingHours.daysOfWeek.includes(weekday)) return false
 
@@ -231,8 +251,6 @@ app.get("/employees", async (req, res) => {
 	function evaluateUserVacation(mailboxSettings) {
 		if (mailboxSettings.automaticRepliesSetting.status === "disabled") return true
 
-		console.log(mailboxSettings)
-
 		const startDate = new Date(mailboxSettings.automaticRepliesSetting.scheduledStartDateTime.dateTime)
 		const endDate = new Date(mailboxSettings.automaticRepliesSetting.scheduledEndDateTime.dateTime)
 
@@ -243,11 +261,7 @@ app.get("/employees", async (req, res) => {
 
 	const employeesState = {}
 
-
 	for (const employee of employees.value) {
-
-		//if (employee.displayName != "Róbert Hálfdanarson") continue
-
 		const mailboxSetting = await graph.getUserMailboxSettings(employee.id)
 		const presence = await graph.getUserPresence(employee.id)
 
@@ -256,14 +270,14 @@ app.get("/employees", async (req, res) => {
 
 	employees.value.sort((a, b) => a.displayName.localeCompare(b.displayName))
 
-
 	res.json({employees: employees.value.map(emp => ({
 		name: emp.displayName,
 		id: emp.id,
 		isActive: employeesState[emp.displayName],
 	}))})
-
 })
+
+
 
 app.listen(SERVER_PORT, () => {
 		graph.setup()

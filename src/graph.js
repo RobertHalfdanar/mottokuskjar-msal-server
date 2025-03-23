@@ -8,30 +8,17 @@ If he is status set on do not disturbe
 If he is not on vecation
 
 */
-const tenantId = process.env.AZURE_TENANT_ID //"283d6102-3937-4c3b-8381-cbec140bdef8";
-const clientId = process.env.AZURE_CLIENT_ID // "f53a37a2-c624-4c76-9c26-083c8109678c";
-
-
-console.log(tenantId)
-console.log(clientId)
-
+const tenantId = process.env.AZURE_TENANT_ID
+const clientId = process.env.AZURE_CLIENT_ID
+const clientSecret = process.env.AZURE_CLIENT_SECRET
 
 
 const appMsalConfig = {
     auth: {
         clientId: clientId,
         authority: `https://auth.microsoftonline.com/${tenantId}`,
-        clientSecret:  '' //TODO
+        clientSecret: clientSecret
     },
-    system: {
-        loggerOptions: {
-            loggerCallback(logLevel, message, containsPii) {
-                if(!containsPii) console.log(message);
-            },
-            piiLoggingEnabled: false,
-            logLevel: msal.LogLevel.Verbose,
-        }
-    }
 }
 
 let confidentialClient = new ConfidentialClientApplication(appMsalConfig)
@@ -111,7 +98,6 @@ function getAuthenticationClient(msalClient) {
                 done(null, result.accessToken)
 
             } catch (err) {
-                console.log(JSON.stringify(err, Object.getOwnPropertyNames(err)));
                 done(err, null)
             }
         }
