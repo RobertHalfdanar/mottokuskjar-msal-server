@@ -29,5 +29,7 @@ jobs:
             cd ./mottokuskjar-msal-server 
             git pull origin main --rebase
           
+            chmod u+x ./scripts/production.sh
+          
             nohup ./scripts/production.sh > "deploy-${DATE}.log" 2> "deploy-${DATE}.log" &
           '"
