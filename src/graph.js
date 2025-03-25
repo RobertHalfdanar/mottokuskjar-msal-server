@@ -68,7 +68,7 @@ module.exports = {
             .header("Prefer", `outlook.timezone="Etc/GMT"`)
             .get()
 
-    }
+    },
 }
 
 

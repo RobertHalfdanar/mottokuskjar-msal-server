@@ -7,6 +7,7 @@ const { PublicClientApplication, CryptoProvider, Configuration, ConfidentialClie
 
 const graph = require("./graph")
 
+
 const bearerToken = require("express-bearer-token");
 
 const express = require("express");
@@ -15,6 +16,8 @@ const {setup} = require("./graph");
 // You will need to set environment variables in .env
 const SERVER_PORT = process.env.PORT || 3000
 const SERVER_HOST = process.env.HOST || "http://localhost:3000"
+
+const TOKEN = "8adb86621d5eed70757c3ccf1777b19fab0ab0d08404d0d039c3286e884451c8"
 
 const clientId = process.env.AZURE_CLIENT_ID
 const tenantId = process.env.AZURE_TENANT_ID
@@ -25,6 +28,9 @@ const configurations = {
 			"Group.Read.All",
 			"user.read",
 			"User.Read.All",
+			"Chat.Create",
+			"Chat.ReadWrite"
+
 		],
 		"redirectUri": `${SERVER_HOST}/graph/redirect`
 	},
@@ -186,7 +192,10 @@ app.get("/token", async (req, res) => {
 
 app.use((req, res, next) => {
 	console.log(`Token: ${req.token}`);
-	next();
+
+	if (req.token == TOKEN ) next();
+
+	res.status(500).send('Something broke!');
 })
 
 app.get("/employees", async (req, res) => {
@@ -277,7 +286,9 @@ app.get("/employees", async (req, res) => {
 	}))})
 })
 
-
+app.get('message', (req, res) => {
+	graph.setup()
+})
 
 app.listen(SERVER_PORT, () => {
 		graph.setup()
