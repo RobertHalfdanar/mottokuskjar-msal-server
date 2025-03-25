@@ -193,9 +193,12 @@ app.get("/token", async (req, res) => {
 app.use((req, res, next) => {
 	console.log(`Token: ${req.token}`);
 
-	if (req.token == TOKEN ) next();
+	if (req.token === TOKEN ) {
+		next();
+	} else {
+		res.status(500).send('Something broke!');
 
-	res.status(500).send('Something broke!');
+	}
 })
 
 app.get("/employees", async (req, res) => {
