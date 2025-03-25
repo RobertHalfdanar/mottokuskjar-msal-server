@@ -27,7 +27,7 @@ jobs:
             set -eo pipefail
          
             cd ./mottokuskjar-msal-server 
-            git pull origin main
+            git pull origin main --rebase
           
             nohup ./scripts/production.sh > "deploy-${DATE}.log" 2> "deploy-${DATE}.log" &
           '"
